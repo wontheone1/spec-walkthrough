@@ -1,6 +1,7 @@
-(ns spec-walkthrough.core)
+(ns spec-walkthrough.core
+  (:require
+    [clojure.spec.alpha :as s]))
 
-(defn foo
-  "I don't do a whole lot."
-  [x]
-  (println x "Hello, World!"))
+(s/conform even? 1000)
+;;=> 1000
+
