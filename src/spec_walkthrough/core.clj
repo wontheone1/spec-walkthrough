@@ -25,3 +25,6 @@
 
 (s/conform even? 1000)
 ;;=> 1000
+
+(s/valid? even? 10)
+;;=> true
