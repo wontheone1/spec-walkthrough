@@ -3,8 +3,7 @@
     [clojure.spec.alpha :as s]
     [clojure.spec.alpha :as spec]))
 
-(s/conform even? 1000)
-;;=> 1000
+; overview and rationale
 
 (spec/keys :req [::x ::y (or ::secret (and ::user ::pwd))] :opt [::z])
 
@@ -22,3 +21,7 @@
               :ex (s/alt :odd ::odd? :even ::even?)))
 
 (s/conform s [42 11 13 15 {:a 1 :b 2 :c 3} 1 2 3 42 43 44 11])
+
+
+(s/conform even? 1000)
+;;=> 1000
