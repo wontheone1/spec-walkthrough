@@ -153,3 +153,19 @@
                          (gen/tuple (gen/string-alphanumeric) (gen/string-alphanumeric)))))
 (gen/sample (s/gen ::hello))
 ;;=> ("hello" "ehello3" "eShelloO1" "vhello31p" "hello" "1Xhellow" "S5bhello" "aRejhellorAJ7Yj" "3hellowPMDOgv7" "UhelloIx9E")
+
+;;
+;; Range Specs and Generators
+;;
+
+(s/def ::roll (s/int-in 0 11))
+(gen/sample (s/gen ::roll))
+;;=> (1 0 0 3 1 7 10 1 5 0)
+
+(s/def ::dubs (s/double-in :min -100.0 :max 100.0 :NaN? false :infinite? false))
+(s/valid? ::dubs 2.9)
+;;=> true
+(s/valid? ::dubs Double/POSITIVE_INFINITY)
+;;=> false
+(gen/sample (s/gen ::dubs))
+;;=> (-1.0 -1.0 -1.5 1.25 -0.5 -1.0 -3.125 -1.5625 1.25 -0.390625)
