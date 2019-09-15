@@ -23,3 +23,27 @@
 ;;=>  (:-.!pm8bS_+.Z2qB5cd.p.JI0?_2m.S8l.a_Xtu/+OM_34* -2.3125)
 ;;=>  (:Ci 6.0 -30 -3 1.0)
 ;;=>  (:s?cw*8.t+G.OS.xh_z2!.cF-b!PAQ_.E98H4_4lSo/?_m0T*7i 4.4375 -3.5 6.0 108 0.33203125 2 8 -0.517578125 -4))
+
+;; Generating a game of cards
+
+(def suit? #{:club :diamond :heart :spade})
+(def rank? (into #{:jack :queen :king :ace} (range 2 11)))
+(def deck (for [suit suit? rank rank?] [rank suit]))
+
+(s/def ::card (s/tuple rank? suit?))
+(s/def ::hand (s/* ::card))
+
+(s/def ::name string?)
+(s/def ::score int?)
+(s/def ::player (s/keys :req [::name ::score ::hand]))
+
+(s/def ::players (s/* ::player))
+(s/def ::deck (s/* ::card))
+(s/def ::game (s/keys :req [::players ::deck]))
+
+(gen/generate (s/gen ::player))
+;;=> {:spec.examples.guide/name "sAt8r6t",
+;;    :spec.examples.guide/score 233843,
+;;    :spec.examples.guide/hand ([8 :spade] [5 :heart] [9 :club] [3 :heart])}
+
+(gen/generate (s/gen ::game))
