@@ -47,3 +47,109 @@
 ;;    :spec.examples.guide/hand ([8 :spade] [5 :heart] [9 :club] [3 :heart])}
 
 (gen/generate (s/gen ::game))
+
+;;
+;; Exercise
+;;
+
+(s/exercise (s/cat :k keyword? :ns (s/+ number?)) 5)
+;;=>
+;;([(:y -2.0) {:k :y, :ns [-2.0]}]
+;; [(:_/? -1.0 0.5) {:k :_/?, :ns [-1.0 0.5]}]
+;; [(:-B 0 3.0) {:k :-B, :ns [0 3.0]}]
+;; [(:-!.gD*/W+ -3 3.0 3.75) {:k :-!.gD*/W+, :ns [-3 3.0 3.75]}]
+;; [(:_Y*+._?q-H/-3* 0 1.25 1.5) {:k :_Y*+._?q-H/-3*, :ns [0 1.25 1.5]}])
+
+(s/exercise (s/or :k keyword? :s string? :n number?) 5)
+;;=> ([:H [:k :H]]
+;;    [:ka [:k :ka]]
+;;    [-1 [:n -1]]
+;;    ["" [:s ""]]
+;;    [-3.0 [:n -3.0]])
+
+(defn ranged-rand
+  "Returns random int in range start <= rand < end"
+  [start end]
+  (+ start (long (rand (- end start)))))
+
+(s/fdef ranged-rand
+        :args (s/and (s/cat :start int? :end int?)
+                     #(< (:start %) (:end %)))
+        :ret int?
+        :fn (s/and #(>= (:ret %) (-> % :args :start))
+                   #(< (:ret %) (-> % :args :end))))
+
+(s/exercise-fn `ranged-rand)
+
+;=>
+;([(-2 -1)   -2]
+; [(-3 3)     0]
+; [(0 1)      0]
+; [(-8 -7)   -8]
+; [(3 13)     7]
+; [(-1 0)    -1]
+; [(-69 99) -41]
+; [(-19 -1)  -5]
+; [(-1 1)    -1]
+; [(0 65)     7])
+
+;;
+;; Using s/and Generators
+;;
+
+(gen/generate (s/gen even?))
+;; Execution error (ExceptionInfo) at user/eval1281 (REPL:1).
+;; Unable to construct gen at: [] for: clojure.core$even_QMARK_@73ab3aac
+
+(gen/generate (s/gen (s/and int? even?)))
+;;=> -15161796
+
+(defn divisible-by [n] #(zero? (mod % n)))
+
+(gen/sample (s/gen (s/and int?
+                          #(> % 0)
+                          (divisible-by 3))))
+;;=> (3 9 1524 3 1836 6 3 3 927 15027)
+
+(gen/sample (s/gen (s/and pos-int? (divisible-by 3))))
+;;=> (3 3 15 6 6 3 12 531 195 3)
+
+;; hello, are you the one I'm looking for?
+(gen/sample (s/gen (s/and string? #(clojure.string/includes? % "hello"))))
+;; Error printing return value (ExceptionInfo) at clojure.test.check.generators/such-that-helper (generators.cljc:320).
+;; Couldn't satisfy such-that predicate after 100 tries.
+
+;;
+;; Custom Generators
+;;
+
+(s/def ::kws (s/and keyword? #(= (namespace %) "my.domain")))
+(s/valid? ::kws :my.domain/name) ;; true
+(gen/sample (s/gen ::kws)) ;; unlikely we'll generate useful keywords this way
+
+(def kw-gen (s/gen #{:my.domain/name :my.domain/occupation :my.domain/id}))
+(gen/sample kw-gen 5)
+;;=> (:my.domain/occupation :my.domain/occupation :my.domain/name :my.domain/id :my.domain/name)
+
+(s/def ::kws (s/with-gen (s/and keyword? #(= (namespace %) "my.domain"))
+                         #(s/gen #{:my.domain/name :my.domain/occupation :my.domain/id})))
+(s/valid? ::kws :my.domain/name)  ;; true
+(gen/sample (s/gen ::kws))
+;;=> (:my.domain/occupation :my.domain/occupation :my.domain/name  ...)
+
+(def kw-gen-2 (gen/fmap #(keyword "my.domain" %) (gen/string-alphanumeric)))
+(gen/sample kw-gen-2 5)
+;;=> (:my.domain/ :my.domain/ :my.domain/1 :my.domain/1O :my.domain/l9p2)
+
+(def kw-gen-3 (gen/fmap #(keyword "my.domain" %)
+                        (gen/such-that #(not= % "")
+                                       (gen/string-alphanumeric))))
+(gen/sample kw-gen-3 5)
+;;=> (:my.domain/O :my.domain/b :my.domain/ZH :my.domain/31 :my.domain/U)
+
+(s/def ::hello
+  (s/with-gen #(clojure.string/includes? % "hello")
+              #(gen/fmap (fn [[s1 s2]] (str s1 "hello" s2))
+                         (gen/tuple (gen/string-alphanumeric) (gen/string-alphanumeric)))))
+(gen/sample (s/gen ::hello))
+;;=> ("hello" "ehello3" "eShelloO1" "vhello31p" "hello" "1Xhellow" "S5bhello" "aRejhellorAJ7Yj" "3hellowPMDOgv7" "UhelloIx9E")
